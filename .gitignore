@@ -1,0 +1,17 @@
+# Build artifacts
+build/
+twister-out*/
+mnt/
+
+# IDE and tooling
+.cache/
+.DS_Store
+.vscode/
+*.swp
+*.swo
+
+# Claude Code
+.claude/
+
+# PDF docs (not part of the driver)
+*.pdf

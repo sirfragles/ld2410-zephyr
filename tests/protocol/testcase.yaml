@@ -1,0 +1,4 @@
+tests:
+  drivers.sensor.ld2410.protocol:
+    tags: drivers sensor
+    platform_allow: native_sim

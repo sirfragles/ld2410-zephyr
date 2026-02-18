@@ -1,0 +1,49 @@
+/*
+ * Copyright (c) 2024 Matthew Macdonald-Wallace
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Devicetree overlay for XIAO BLE (nRF52840) with LD2410 mmWave sensor.
+ *
+ * IMPORTANT: The LD2410 factory default baud rate is 256000, which is not
+ * supported by the nRF52 UARTE peripheral. You must first change the sensor
+ * baud rate to 9600 using the HiLink Android/iOS app before connecting.
+ *
+ * Wiring:
+ *   D2 (P0.28) = UART1 RX  <-- LD2410 TX
+ *   D3 (P0.29) = UART1 TX  --> LD2410 RX
+ *   D10 (P0.26) = GPIO IN  <-- LD2410 OUT (optional)
+ */
+
+&pinctrl {
+	uart1_default: uart1_default {
+		group1 {
+			psels = <NRF_PSEL(UART_TX, 0, 29)>;
+		};
+		group2 {
+			psels = <NRF_PSEL(UART_RX, 0, 28)>;
+			bias-pull-up;
+		};
+	};
+
+	uart1_sleep: uart1_sleep {
+		group1 {
+			psels = <NRF_PSEL(UART_TX, 0, 29)>,
+				<NRF_PSEL(UART_RX, 0, 28)>;
+			low-power-enable;
+		};
+	};
+};
+
+&uart1 {
+	compatible = "nordic,nrf-uarte";
+	status = "okay";
+	current-speed = <9600>;
+	pinctrl-0 = <&uart1_default>;
+	pinctrl-1 = <&uart1_sleep>;
+	pinctrl-names = "default", "sleep";
+
+	ld2410: ld2410 {
+		compatible = "hilink,ld2410";
+		out-gpios = <&gpio0 26 GPIO_ACTIVE_HIGH>;
+	};
+};

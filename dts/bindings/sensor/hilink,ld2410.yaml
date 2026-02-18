@@ -1,0 +1,32 @@
+# Copyright (c) 2024 Matthew Macdonald-Wallace
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  HiLink LD2410 24GHz FMCW mmWave human presence sensor.
+  Supports LD2410, LD2410B, and LD2410C variants.
+
+  The sensor communicates over UART and must be declared as a
+  child node of a UART peripheral node.
+
+compatible: "hilink,ld2410"
+
+include:
+  - uart-device.yaml
+
+properties:
+  out-gpios:
+    type: phandle-array
+    description: |
+      Optional GPIO connected to the sensor OUT pin for hardware
+      presence detection. When specified, the driver automatically
+      configures this GPIO as an input during initialization.
+
+examples:
+  - |
+    &uart1 {
+            current-speed = <256000>;
+            ld2410: ld2410 {
+                    compatible = "hilink,ld2410";
+                    out-gpios = <&gpio0 26 GPIO_ACTIVE_HIGH>;
+            };
+    };

@@ -1,0 +1,52 @@
+# Copyright (c) 2024 Matthew Macdonald-Wallace
+# SPDX-License-Identifier: Apache-2.0
+
+menuconfig LD2410
+	bool "LD2410 24GHz mmWave Presence Sensor"
+	default y
+	depends on SERIAL
+	depends on UART_INTERRUPT_DRIVEN
+	depends on RING_BUFFER
+	help
+	  Enable driver for HiLink LD2410 family 24GHz mmWave human
+	  presence sensors (LD2410, LD2410B, LD2410C).
+
+if LD2410
+
+config LD2410_RX_BUF_SIZE
+	int "UART receive ring buffer size"
+	default 256
+	help
+	  Size of the UART receive ring buffer in bytes.
+
+config LD2410_CMD_TIMEOUT_MS
+	int "Command ACK response timeout (ms)"
+	default 1000
+	help
+	  Timeout in milliseconds for ACK responses from
+	  configuration commands.
+
+config LD2410_THREAD_STACK_SIZE
+	int "RX processing thread stack size"
+	default 1024
+	help
+	  Stack size for the UART receive processing thread.
+
+config LD2410_THREAD_PRIORITY
+	int "RX processing thread priority"
+	default 5
+	help
+	  Cooperative priority for the RX processing thread.
+
+config LD2410_INIT_PRIORITY
+	int "Driver initialization priority"
+	default 90
+	help
+	  Initialization priority for the LD2410 driver.
+	  Must be higher than SERIAL_INIT_PRIORITY.
+
+module = LD2410
+module-str = ld2410
+source "subsys/logging/Kconfig.template.log_config"
+
+endif # LD2410
