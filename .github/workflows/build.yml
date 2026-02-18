@@ -60,6 +60,8 @@ jobs:
           west-group-filter: "-optional"
 
       - name: Run protocol tests
+        env:
+          ZEPHYR_EXTRA_MODULES: ${{ github.workspace }}/ld2410
         run: |
           west twister \
             -T ld2410/tests \
