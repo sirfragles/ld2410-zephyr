@@ -45,6 +45,8 @@ jobs:
   test:
     name: Protocol Tests (native_sim)
     runs-on: ubuntu-latest
+    permissions:
+      checks: write        # required by mikepenz/action-junit-report
 
     steps:
       - uses: actions/checkout@v4
@@ -60,12 +62,23 @@ jobs:
           west-group-filter: "-optional"
 
       - name: Run protocol tests
-        env:
-          ZEPHYR_EXTRA_MODULES: ${{ github.workspace }}/ld2410
         run: |
           west twister \
             -T ld2410/tests \
-            -p native_sim
+            -p native_sim \
+            --extra-args "ZEPHYR_EXTRA_MODULES=$GITHUB_WORKSPACE/ld2410"
+
+      - name: Show build log on failure
+        if: failure()
+        run: |
+          LOG=twister-out/native_sim/protocol/drivers.sensor.ld2410.protocol/build.log
+          if [ -f "$LOG" ]; then
+            echo "=== $LOG ==="
+            cat "$LOG"
+          else
+            echo "Build log not found at $LOG"
+            find twister-out -name "build.log" | head -5
+          fi
 
       - name: Upload twister results
         uses: actions/upload-artifact@v4
@@ -79,6 +92,6 @@ jobs:
         uses: mikepenz/action-junit-report@v4
         if: always()
         with:
-          report_paths: twister-out/**/twister.xml
+          report_paths: twister-out/twister.xml
           check_name: Protocol Test Results
           fail_on_failure: true
