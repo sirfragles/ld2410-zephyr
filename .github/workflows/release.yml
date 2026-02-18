@@ -13,12 +13,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          path: modules/lib/ld2410
+          path: ld2410
 
       - name: Set up Zephyr workspace
         uses: zephyrproject-rtos/action-zephyr-setup@v1
         with:
-          app-path: modules/lib/ld2410
+          app-path: ld2410
           toolchains: arm-zephyr-eabi
           sdk-version: "0.16.8"
           west-group-filter: "-optional"
@@ -26,7 +26,7 @@ jobs:
       - name: Run protocol tests
         run: |
           west twister \
-            -T modules/lib/ld2410/tests \
+            -T ld2410/tests \
             -p native_sim
 
   build-firmware:
@@ -36,18 +36,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          path: modules/lib/ld2410
+          path: ld2410
 
       - name: Set up Zephyr workspace
         uses: zephyrproject-rtos/action-zephyr-setup@v1
         with:
-          app-path: modules/lib/ld2410
+          app-path: ld2410
           toolchains: arm-zephyr-eabi
           sdk-version: "0.16.8"
           west-group-filter: "-optional"
 
       - name: Build sample for xiao_ble
-        run: west build -b xiao_ble modules/lib/ld2410/samples/basic
+        run: west build -b xiao_ble ld2410/samples/basic
 
       - name: Rename firmware for release
         run: |
