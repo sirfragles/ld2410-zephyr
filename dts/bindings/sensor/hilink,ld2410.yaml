@@ -20,13 +20,3 @@ properties:
       Optional GPIO connected to the sensor OUT pin for hardware
       presence detection. When specified, the driver automatically
       configures this GPIO as an input during initialization.
-
-examples:
-  - |
-    &uart1 {
-            current-speed = <256000>;
-            ld2410: ld2410 {
-                    compatible = "hilink,ld2410";
-                    out-gpios = <&gpio0 26 GPIO_ACTIVE_HIGH>;
-            };
-    };
