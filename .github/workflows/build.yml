@@ -63,8 +63,7 @@ jobs:
         run: |
           west twister \
             -T ld2410/tests \
-            -p native_sim \
-            --output-dir twister-out
+            -p native_sim
 
       - name: Upload twister results
         uses: actions/upload-artifact@v4
