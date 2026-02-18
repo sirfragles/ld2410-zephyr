@@ -1,0 +1,102 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  test:
+    name: Verify Tests Pass
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/zephyrproject-rtos/ci:v0.27.4
+    env:
+      CMAKE_PREFIX_PATH: /opt/toolchains/zephyr-sdk-0.16.8
+      ZEPHYR_TOOLCHAIN_VARIANT: zephyr
+
+    steps:
+      - name: Install west
+        run: pip3 install west
+
+      - name: Initialize Zephyr workspace
+        run: |
+          mkdir -p /workdir && cd /workdir
+          west init --mr v3.7.0
+          west update --narrow -o=--depth=1
+          pip3 install -r zephyr/scripts/requirements.txt
+
+      - uses: actions/checkout@v4
+        with:
+          path: /workdir/modules/lib/ld2410
+
+      - name: Run protocol tests
+        working-directory: /workdir
+        run: |
+          west twister \
+            -T modules/lib/ld2410/tests \
+            --extra-args ZEPHYR_EXTRA_MODULES=/workdir/modules/lib/ld2410 \
+            -p native_sim
+
+  build-firmware:
+    name: Build Release Firmware
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/zephyrproject-rtos/ci:v0.27.4
+    env:
+      CMAKE_PREFIX_PATH: /opt/toolchains/zephyr-sdk-0.16.8
+      ZEPHYR_TOOLCHAIN_VARIANT: zephyr
+
+    steps:
+      - name: Install west
+        run: pip3 install west
+
+      - name: Initialize Zephyr workspace
+        run: |
+          mkdir -p /workdir && cd /workdir
+          west init --mr v3.7.0
+          west update --narrow -o=--depth=1
+          pip3 install -r zephyr/scripts/requirements.txt
+
+      - uses: actions/checkout@v4
+        with:
+          path: /workdir/modules/lib/ld2410
+
+      - name: Build sample for xiao_ble
+        working-directory: /workdir
+        run: |
+          west build -b xiao_ble \
+            modules/lib/ld2410/samples/basic \
+            -- -DZEPHYR_EXTRA_MODULES=/workdir/modules/lib/ld2410
+
+      - name: Rename firmware for release
+        run: |
+          cp /workdir/build/zephyr/zephyr.hex \
+            /workdir/build/zephyr/ld2410-sample-xiao_ble-${{ github.ref_name }}.hex
+
+      - name: Upload firmware for release job
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-firmware
+          path: /workdir/build/zephyr/ld2410-sample-xiao_ble-${{ github.ref_name }}.hex
+
+  create-release:
+    name: Create GitHub Release
+    needs: [test, build-firmware]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download firmware artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: release-firmware
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: "*.hex"
+          generate_release_notes: true
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-rc') || contains(github.ref_name, '-beta') || contains(github.ref_name, '-alpha') }}
