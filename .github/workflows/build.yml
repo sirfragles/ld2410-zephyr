@@ -65,7 +65,7 @@ jobs:
         run: |
           west twister \
             -T ld2410/tests \
-            -p native_sim \
+            -p native_sim/native/64 \
             --extra-args "ZEPHYR_EXTRA_MODULES=$GITHUB_WORKSPACE/ld2410"
 
       - name: Show build log on failure
