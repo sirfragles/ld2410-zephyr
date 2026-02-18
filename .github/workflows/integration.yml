@@ -1,0 +1,78 @@
+name: Integration
+
+# Verifies that the documented west manifest integration works:
+#
+#   manifest:
+#     projects:
+#       - name: ld2410
+#         url: https://github.com/sirfragles/ld2410-zephyr
+#         revision: main
+#         path: modules/lib/ld2410
+#
+# A synthetic user-app west.yml is created that mirrors the README
+# instructions, but points at the current commit via a local file:// URL
+# so the test always reflects the code under review.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  integration:
+    name: Integration Test (west manifest)
+    runs-on: ubuntu-latest
+
+    steps:
+      # Check out to a neutral path.
+      # West will clone the module from here into modules/lib/ld2410.
+      - uses: actions/checkout@v4
+        with:
+          path: ld2410-src
+
+      # Build a west.yml that mirrors the README manifest snippet,
+      # substituting the GitHub URL with a local file:// reference so
+      # this always tests the commit under review (not the published main branch).
+      - name: Create user-app with west manifest
+        run: |
+          SHA=$(git -C ld2410-src rev-parse HEAD)
+          mkdir -p user-app
+          cat > user-app/west.yml << WEST_EOF
+          manifest:
+            remotes:
+              - name: zephyrproject-rtos
+                url-base: https://github.com/zephyrproject-rtos
+            defaults:
+              remote: zephyrproject-rtos
+            projects:
+              - name: zephyr
+                revision: v3.7.0
+                import: true
+              - name: ld2410
+                url: file://${{ github.workspace }}/ld2410-src
+                revision: ${SHA}
+                path: modules/lib/ld2410
+          WEST_EOF
+
+      # west init -l user-app  →  west update
+      # west clones ld2410 from the file:// URL into modules/lib/ld2410,
+      # exactly matching the path users get from the documented manifest entry.
+      - name: Set up Zephyr workspace
+        uses: zephyrproject-rtos/action-zephyr-setup@v1
+        with:
+          app-path: user-app
+          toolchains: arm-zephyr-eabi
+          sdk-version: "0.16.8"
+          west-group-filter: "-optional"
+
+      # Build the sample from the documented module path.
+      # The module is auto-discovered by Zephyr via the west workspace —
+      # no ZEPHYR_EXTRA_MODULES needed.
+      - name: Build sample (xiao_ble) from modules/lib/ld2410
+        run: west build -b xiao_ble modules/lib/ld2410/samples/basic
