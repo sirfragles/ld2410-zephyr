@@ -61,37 +61,10 @@ jobs:
           sdk-version: "0.16.8"
           west-group-filter: "-optional"
 
+      - name: Build protocol tests
+        run: |
+          west build -b native_sim/native/64 ld2410/tests/protocol \
+            -- -DZEPHYR_EXTRA_MODULES=$GITHUB_WORKSPACE/ld2410
+
       - name: Run protocol tests
-        run: |
-          west twister \
-            -T ld2410/tests \
-            -p native_sim/native/64 \
-            --extra-args "ZEPHYR_EXTRA_MODULES=$GITHUB_WORKSPACE/ld2410"
-
-      - name: Show build log on failure
-        if: failure()
-        run: |
-          LOG=twister-out/native_sim/protocol/drivers.sensor.ld2410.protocol/build.log
-          if [ -f "$LOG" ]; then
-            echo "=== $LOG ==="
-            cat "$LOG"
-          else
-            echo "Build log not found at $LOG"
-            find twister-out -name "build.log" | head -5
-          fi
-
-      - name: Upload twister results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: twister-results
-          path: twister-out/
-          retention-days: 7
-
-      - name: Publish test report
-        uses: mikepenz/action-junit-report@v4
-        if: always()
-        with:
-          report_paths: twister-out/twister.xml
-          check_name: Protocol Test Results
-          fail_on_failure: true
+        run: ./build/zephyr/zephyr.exe
